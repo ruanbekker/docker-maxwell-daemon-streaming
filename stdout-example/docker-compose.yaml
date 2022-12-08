@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    command: --default-authentication-plugin=mysql_native_password --init-file=/tmp/init.sql
+    volumes:
+      - /var/lib/mysql
+      - ./config/my.cnf:/etc/my.cnf:ro
+      - ./config/init.sql:/tmp/init.sql
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=test
+      - MYSQL_ROOT_USER=root
+    networks:
+      - maxwell
+
+  maxwell:
+    #image: zendesk/maxwell
+    build:
+      context: maxwell
+      dockerfile: Dockerfile
+    container_name: maxwell
+    environment:
+      - MYSQL_USERNAME=root
+      - MYSQL_PASSWORD=password
+      - MYSQL_HOST=mysql
+      - MAXWELL_OUTPUT_PRIMARY_KEYS=true
+      - MAXWELL_OUTPUT_PRIMARY_KEYS_COLUMNS=true
+    networks:
+      - maxwell
+    depends_on:
+      - mysql
+
+networks:
+  maxwell:
+    name: maxwell
